@@ -1,6 +1,4 @@
-
 package com.crio.warmup.stock;
-
 
 import com.crio.warmup.stock.dto.*;
 import com.crio.warmup.stock.log.UncaughtExceptionHandler;
@@ -15,16 +13,18 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.ThreadContext;
 import org.springframework.web.client.RestTemplate;
-
 
 public class PortfolioManagerApplication {
 
@@ -53,33 +53,15 @@ public class PortfolioManagerApplication {
     PortfolioTrade[] pt = om.readValue(inputFile, PortfolioTrade[].class);
 
     //list of symbols
-    List<String> sym = new ArrayList<>();
+    List<String> symbols = new ArrayList<>();
     
     //add all symbols to list
     for(PortfolioTrade p: pt){
-      sym.add(p.getSymbol());
+      symbols.add(p.getSymbol());
     }
 
-    return sym;
+    return symbols;
   }
-
-
-  // Note:
-  // 1. You may need to copy relevant code from #mainReadQuotes to parse the Json.
-  // 2. Remember to get the latest quotes from Tiingo API.
-
-
-
-
-
-
-  // Note:
-  // 1. You may have to register on Tiingo to get the api_token.
-  // 2. Look at args parameter and the module instructions carefully.
-  // 2. You can copy relevant code from #mainReadFile to parse the Json.
-  // 3. Use RestTemplate#getForObject in order to call the API,
-  //    and deserialize the results in List<Candle>
-
 
 
   private static void printJsonObject(Object object) throws IOException {
@@ -89,8 +71,15 @@ public class PortfolioManagerApplication {
   }
 
   private static File resolveFileFromResources(String filename) throws URISyntaxException {
-    return Paths.get(
-        Thread.currentThread().getContextClassLoader().getResource(filename).toURI()).toFile();
+    File path;
+    
+    try{
+      path = Paths.get(Thread.currentThread().getContextClassLoader().getResource(filename).toURI()).toFile();
+    }catch(Exception e){
+      throw new RuntimeException();
+    }
+    
+    return path;
   }
 
   private static ObjectMapper getObjectMapper() {
@@ -130,11 +119,11 @@ public class PortfolioManagerApplication {
 
   public static List<String> debugOutputs() {
 
-     String valueOfArgument0 = "trades.json";
-     String resultOfResolveFilePathArgs0 = "/home/crio-user/workspace/abkn9977-ME_QMONEY_V2/qmoney/bin/main/trades.json";
-     String toStringOfObjectMapper = "com.fasterxml.jackson.databind.ObjectMapper@5542c4ed";
-     String functionNameFromTestFileInStackTrace = "PortfolioManagerApplicationTest.mainReadFile()";
-     String lineNumberFromTestFileInStackTrace = "29:1";
+    String valueOfArgument0 = "trades.json";
+    String resultOfResolveFilePathArgs0 = "/home/crio-user/workspace/abkn9977-ME_QMONEY_V2/qmoney/bin/main/trades.json";
+    String toStringOfObjectMapper = "com.fasterxml.jackson.databind.ObjectMapper@5542c4ed";
+    String functionNameFromTestFileInStackTrace = "PortfolioManagerApplicationTest.mainReadFile()";
+    String lineNumberFromTestFileInStackTrace = "29:1";
 
 
     return Arrays.asList(new String[]{valueOfArgument0, resultOfResolveFilePathArgs0,
@@ -142,10 +131,100 @@ public class PortfolioManagerApplication {
         lineNumberFromTestFileInStackTrace});
   }
 
-
   // Note:
   // Remember to confirm that you are getting same results for annualized returns as in Module 3.
+  // Note:
+  // 1. You may need to copy relevant code from #mainReadQuotes to parse the Json.
+  // 2. Remember to get the latest quotes from Tiingo API.
+  // TODO: CRIO_TASK_MODULE_REST_API
+  //  Find out the closing price of each stock on the end_date and return the list
+  //  of all symbols in ascending order by its close value on end date.
 
+  // Note:
+  // 1. You may have to register on Tiingo to get the api_token.
+  // 2. Look at args parameter and the module instructions carefully.
+  // 2. You can copy relevant code from #mainReadFile to parse the Json.
+  // 3. Use RestTemplate#getForObject in order to call the API,
+  //    and deserialize the results in List<Candle>
+  public static List<String> mainReadQuotes(String[] args) throws IOException, URISyntaxException {
+    List<String> symbols = new ArrayList<>();
+
+    if(args.length == 0 || args.equals(null))
+      return symbols;
+
+    List<PortfolioTrade> trades = readTradesFromJson(args[0]);
+
+    if(trades.isEmpty())
+      return symbols;
+
+    LocalDate date = LocalDate.parse(args[1]);
+
+    //store deserialized data in key - value form
+    List<TotalReturnsDto> tiingoResult = new ArrayList<>();
+    
+    RestTemplate rt = new RestTemplate();
+
+    for(PortfolioTrade trade: trades){
+      // String url = prepareUrl(trade, date, "3fb87c54073502ec9ad7ece9f993af461f3e66ec");
+      String url = prepareUrl(trade, date, "3fb87c54073502ec9ad7ece9f993af461f3e66ec");
+
+      TiingoCandle[] tc = rt.getForObject(url, TiingoCandle[].class);
+    
+      if(tc.length > 0){
+        TiingoCandle endDateQuote = tc[tc.length - 1];
+        tiingoResult.add(new TotalReturnsDto(trade.getSymbol(), endDateQuote.getClose()));
+      }
+      
+      //if tiingo retuns an empty array of objects
+      else
+        throw new RuntimeException();
+    }
+
+    //sort trades according to closing price
+    Collections.sort(tiingoResult, (f, s) -> f.getClosingPrice().compareTo(s.getClosingPrice()));
+
+    //get symbols
+    symbols = tiingoResult.stream()
+              .map(q -> q.getSymbol())
+              .collect(Collectors.toList());
+
+    return symbols;
+  }
+
+  // TODO:
+  //  After refactor, make sure that the tests pass by using these two commands
+  //  ./gradlew test --tests PortfolioManagerApplicationTest.readTradesFromJson
+  //  ./gradlew test --tests PortfolioManagerApplicationTest.mainReadFile
+  public static List<PortfolioTrade> readTradesFromJson(String filename) throws IOException, URISyntaxException {
+    //list of symbols
+    List<PortfolioTrade> symbols = new ArrayList<>();
+
+    if(filename.isEmpty())
+      return symbols;
+    
+    File inputFile = resolveFileFromResources(filename);
+
+    ObjectMapper om = getObjectMapper();
+
+    PortfolioTrade[] pt = om.readValue(inputFile, PortfolioTrade[].class);
+    
+    //add all symbols to list
+    for(PortfolioTrade p: pt){
+      symbols.add(p);
+    }
+
+    return symbols;
+  }
+
+  // TODO:
+  //  Build the Url using given parameters and use this function in your code to cann the API.
+  public static String prepareUrl(PortfolioTrade trade, LocalDate endDate, String token) {
+      // return "https://api.tiingo.com/tiingo/daily/" + trade.getSymbol() + "/prices?startDate=" +
+      //        endDate +"&endDate=" + endDate + "&token=" + token;
+
+      return "https://api.tiingo.com/tiingo/daily/" + trade.getSymbol() + "/prices?startDate=" +
+      trade.getPurchaseDate() +"&endDate=" + endDate + "&token=" + token;
+  }
 
 
   public static void main(String[] args) throws Exception {
@@ -153,6 +232,8 @@ public class PortfolioManagerApplication {
     ThreadContext.put("runId", UUID.randomUUID().toString());
 
     printJsonObject(mainReadFile(args));
+
+    printJsonObject(mainReadQuotes(args));
+
   }
 }
-
