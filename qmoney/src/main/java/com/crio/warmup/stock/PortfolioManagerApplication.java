@@ -71,13 +71,7 @@ public class PortfolioManagerApplication {
   }
 
   private static File resolveFileFromResources(String filename) throws URISyntaxException {
-    File path;
-    
-    try{
-      path = Paths.get(Thread.currentThread().getContextClassLoader().getResource(filename).toURI()).toFile();
-    }catch(Exception e){
-      throw new RuntimeException();
-    }
+    File path = Paths.get(Thread.currentThread().getContextClassLoader().getResource(filename).toURI()).toFile();
     
     return path;
   }
@@ -152,14 +146,15 @@ public class PortfolioManagerApplication {
     if(args.length == 0 || args.equals(null))
       return symbols;
 
+    //fetch the deserialized data usin readTradesFromJson method
     List<PortfolioTrade> trades = readTradesFromJson(args[0]);
 
     if(trades.isEmpty())
       return symbols;
 
+    //parse endDate to LocalDate object
     LocalDate date = LocalDate.parse(args[1]);
 
-    //store deserialized data in key - value form
     List<TotalReturnsDto> tiingoResult = new ArrayList<>();
     
     RestTemplate rt = new RestTemplate();
@@ -178,6 +173,7 @@ public class PortfolioManagerApplication {
       //if tiingo retuns an empty array of objects
       else
         throw new RuntimeException();
+      
     }
 
     //sort trades according to closing price
