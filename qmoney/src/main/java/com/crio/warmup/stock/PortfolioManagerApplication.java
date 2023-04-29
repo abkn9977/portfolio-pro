@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 
 public class PortfolioManagerApplication {
 
-  private static final String TOKEN = "3fb87c54073502ec9ad7ece9f993af461f3e66ec";
+  private static final String TOKEN = "289464e8faf5cf34aba42001442fb59b3c854b6c";
 
   // TODO: CRIO_TASK_MODULE_JSON_PARSING
   // Task:

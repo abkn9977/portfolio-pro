@@ -57,5 +57,4 @@ class ModuleThreeRefactorTest {
     Assertions.assertEquals(296.24, candleList.get(0).getOpen(), 0.1);
     Assertions.assertEquals(297.15, candleList.get(candleList.size()-1).getOpen(), 0.1);
   }
-
 }

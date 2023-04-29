@@ -29,7 +29,7 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
 
   private RestTemplate restTemplate;
-  private static final String TOKEN = "3fb87c54073502ec9ad7ece9f993af461f3e66ec";
+  private static final String TOKEN = "289464e8faf5cf34aba42001442fb59b3c854b6c";
 
   // Caution: Do not delete or modify the constructor, or else your build will break!
   // This is absolutely necessary for backward compatibility
