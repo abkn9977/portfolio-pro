@@ -2,6 +2,8 @@ package com.crio.warmup.stock;
 
 import com.crio.warmup.stock.dto.*;
 import com.crio.warmup.stock.log.UncaughtExceptionHandler;
+import com.crio.warmup.stock.portfolio.PortfolioManager;
+import com.crio.warmup.stock.portfolio.PortfolioManagerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
@@ -297,7 +299,7 @@ public class PortfolioManagerApplication {
       annualReturn.add(trdAnnualReturn);
     }
 
-    Collections.sort(annualReturn);
+    Collections.sort(annualReturn, (a, b) -> b.getAnnualizedReturn().compareTo(a.getAnnualizedReturn()));
 
     return annualReturn;
   }
@@ -328,7 +330,32 @@ public class PortfolioManagerApplication {
     return new AnnualizedReturn(trade.getSymbol(), annualizedReturn, totalReturn);
   }
 
+  // TODO: CRIO_TASK_MODULE_REFACTOR
+  //  Once you are done with the implementation inside PortfolioManagerImpl and
+  //  PortfolioManagerFactory, create PortfolioManager using PortfolioManagerFactory.
+  //  Refer to the code from previous modules to get the List<PortfolioTrades> and endDate, and
+  //  call the newly implemented method in PortfolioManager to calculate the annualized returns.
 
+  // Note:
+  // Remember to confirm that you are getting same results for annualized returns as in Module 3.
+
+  public static List<AnnualizedReturn> mainCalculateReturnsAfterRefactor(String[] args)
+      throws Exception {
+      //list of annual returns
+      List<AnnualizedReturn> annualizedReturns = new ArrayList<>();
+
+      if(args.length == 0 || args == null)
+        return annualizedReturns;
+
+      List<PortfolioTrade> portfolioTrades = readTradesFromJson(args[0]);
+
+      LocalDate endDate = LocalDate.parse(args[1]);
+
+      //get portfolio manager
+      PortfolioManager portfolioManager = PortfolioManagerFactory.getPortfolioManager(new RestTemplate());
+    
+      return portfolioManager.calculateAnnualizedReturn(portfolioTrades, endDate);
+  }
 
   public static void main(String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -344,7 +371,8 @@ public class PortfolioManagerApplication {
 
     System.out.println(s);
 
-    printJsonObject(mainCalculateSingleReturn(args));
+    //printJsonObject(mainCalculateSingleReturn(args));
 
+    printJsonObject(mainCalculateReturnsAfterRefactor(args));
   }
 }
