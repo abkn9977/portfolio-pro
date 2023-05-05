@@ -92,7 +92,6 @@ class PortfolioManagerTest {
       Mockito.doReturn(getCandles(googlQuotes))
           .when(portfolioManager).getStockQuote(eq("GOOGL"), any(), any());
     }
-    
     PortfolioTrade trade1 = new PortfolioTrade("AAPL", 50, LocalDate.parse("2019-01-02"));
     PortfolioTrade trade2 = new PortfolioTrade("GOOGL", 100, LocalDate.parse("2019-01-02"));
     PortfolioTrade trade3 = new PortfolioTrade("MSFT", 20, LocalDate.parse("2019-01-02"));

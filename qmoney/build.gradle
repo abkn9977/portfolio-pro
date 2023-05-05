@@ -5,7 +5,7 @@ plugins {
 
 group = 'com.crio.warmup'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+sourceCompatibility = '8'
 
 configurations {
     compileOnly {
@@ -45,5 +45,13 @@ test {
     useJUnitPlatform()
 }
 
-
-
+publishing {
+    publications {
+        maven(MavenPublication)  {
+            groupId =  'com.crio.warmup'
+            artifactId = 'annual-return'
+            version = '1.0.0'
+            from components.java
+        }
+    }
+}
